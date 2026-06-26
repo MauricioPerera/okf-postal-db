@@ -1,8 +1,13 @@
 # okf-postal-db
 
 DB con CRUD para agentes que combina **estado materializado legible** (OKF) con una
-**bitácora de eventos firmada y append-only** (modelo postal híbrido), expuesta vía
-REST sobre Fastify. Node.js ESM.
+**bitácora de eventos firmada y append-only** (modelo postal híbrido). Node.js ESM.
+
+Se expone a través de **tres interfaces** unificadas bajo el bin `okf`:
+
+- **REST** (Fastify) — `src/server.js`, `okf serve` o `npm start`.
+- **MCP** (Model Context Protocol, stdio) — `src/mcp.js`, `okf mcp` o `npm run mcp`.
+- **CLI `okf`** — `bin/okf.js` (subcomandos `serve` / `mcp` / `verify` / `init` / `help`).
 
 El core fue escrito por instancias GLM bajo un **gate de complejidad** (CCDD); solo
 `src/crypto.js` está **vendorizado** de postal.
@@ -310,6 +315,72 @@ profesional (volumen modesto).
 
 ---
 
+## CLI (`okf`)
+
+Un único punto de entrada unificado en `bin/okf.js` (expuesto por `package.json`
+como `"bin": { "okf": "bin/okf.js" }`). Las dependencias pesadas (Fastify, SDK MCP)
+se cargan con import dinámico **solo en el subcomando que las usa**, así `okf verify`
+no arranca un servidor.
+
+### Instalación
+
+```bash
+# opción A: instala el bin globalmente enlazándolo
+npm link              # (o npm i -g .)  -> queda disponible el comando `okf`
+
+# opción B: sin instalar, invoca directamente al intérprete
+node bin/okf.js <comando>   # cubre rutas absolutas/relativas
+```
+
+### Subcomandos
+
+| Comando | Qué hace | Equivale a |
+|---------|----------|------------|
+| `okf serve` | Arranca la API REST (Fastify) en `0.0.0.0:PORT`. Env `DATA_DIR`, `PORT`. | `npm start` |
+| `okf mcp` | Arranca la memoria MCP por stdio sobre `DATA_DIR`. | `npm run mcp` |
+| `okf verify [dir]` | Verifica la bitácora firmada de `<dir>` (o `DATA_DIR`); `exit 0` íntegra, `exit 1` manipulada. | `node src/cli.js verify [dir]` |
+| `okf init [path]` | Crea/carga la identidad del agente (default `identities/agent.json`). | `npm run init-identity` |
+| `okf help` | Muestra la ayuda y termina `0`. | — |
+
+> Comando desconocido → ayuda + `exit 2`.
+
+### Ejemplo
+
+```bash
+okf init                    # crea identities/agent.json
+okf serve                   # API REST en :3000
+okf verify ./data           # verifica la bitácora de ./data
+```
+
+Para el modelo de amenazas y limitaciones, ver [`SECURITY.md`](SECURITY.md).
+
+---
+
+## Despliegue (Docker)
+
+El `Dockerfile` (imagen `node:20-alpine`) arranca la API REST por defecto
+(`CMD ["node", "bin/okf.js", "serve"]`). Los datos y la identidad se montan como
+**volúmenes** (`/data`, `/app/identities`) para que persistan fuera del contenedor.
+
+```bash
+# Build
+docker build -t okf-postal-db .
+
+# Run (REST en :3000)
+docker run -p 3000:3000 \
+  -v "$PWD/data:/data" \
+  -v "$PWD/identities:/app/identities" \
+  okf-postal-db
+```
+
+> Para servir la memoria por **MCP** (stdio) **no** uses este server HTTP: ejecuta
+> `docker run -i ... node bin/okf.js mcp` con el stdio conectado al agente/cliente MCP.
+
+Guía paso a paso (instalación, identidad, primer registro, MCP): ver
+[`QUICKSTART.md`](QUICKSTART.md).
+
+---
+
 ## Instalación y arranque
 
 Requisitos: Node.js >= 18.
@@ -509,12 +580,21 @@ Las colecciones se definen con **JSON Schema 2020-12** en
 compila un validador ajv por colección. **No hace falta tocar código** para añadir una
 colección: basta con crear el schema.
 
-### Colecciones de ejemplo (incluidas)
+### Colecciones incluidas (6)
 
-| Colección | `x-okf-type` | Campos | Requerido |
-|-----------|--------------|--------|-----------|
-| `notes` | `note` | `title`, `description`, `tags`, `resource`, `body` | `title` |
-| `contacts` | `contact` | `name`, `email` (format `email`), `phone`, `tags`, `resource`, `body` | `name` |
+Se definen en `schema/collections/*.schema.json` y se cargan dinámicamente al
+arrancar (no requiere tocar código). Dos de demostración y cuatro de **dominio**
+(plantillas de **ejemplo**: no afirman cumplimiento regulatorio HIPAA/GDPR ni
+ninguno otro — son puntos de partida a adaptar).
+
+| Colección | `x-okf-type` | Tipo | Campos | Requerido |
+|-----------|--------------|------|--------|-----------|
+| `notes` | `note` | demo | `title`, `description`, `tags`, `resource`, `body` | `title` |
+| `contacts` | `contact` | demo | `name`, `email` (format `email`), `phone`, `tags`, `resource`, `body` | `name` |
+| `patient` | `patient` | dominio (médico) | datos de paciente (ejemplo, sin afirmar cumplimiento HIPAA) | ver schema |
+| `prescription` | `prescription` | dominio (médico) | receta (ejemplo, sin afirmar cumplimiento) | ver schema |
+| `legal_case` | `legal_case` | dominio (legal) | caso/expediente legal (ejemplo) | ver schema |
+| `contract` | `contract` | dominio (legal) | contrato (ejemplo) | ver schema |
 
 Para agregar una colección nueva (p. ej. `tasks`):
 
@@ -628,10 +708,10 @@ npm test
 # -> node --test "test/**/*.test.js"
 ```
 
-**35 tests** (node:test) en `test/`: `db`, `okf-special` (index/log), `contacts`,
+**39 tests** (node:test) en `test/`: `db`, `okf-special` (index/log), `contacts`,
 `query` (paginación/búsqueda `?q=`), `auth` (API key), `rebuild`, `rotation`,
-`rotate-endpoint`, `gitlog`, `mcp` (servidor MCP), `domain-schemas` (medicina/legal).
-`npm test` → **35/35 verde**.
+`rotate-endpoint`, `gitlog`, `mcp` (servidor MCP), `domain-schemas` (medicina/legal),
+`bin` (CLI `okf`). `npm test` → **39/39 verde**.
 
 Los tests cubren el flujo completo (validación, construcción/firma de eventos, gate,
 proyección OKF, archivos especiales y los endpoints REST) usando la bitácora y el
@@ -650,6 +730,8 @@ node src/cli.js verify demo    # verifica un dataDir arbitrario
 
 ```
 .
+├── bin/
+│   └── okf.js            # CLI unificado: serve / mcp / verify / init / help (expuesto como bin "okf")
 ├── src/
 │   ├── identity.js     # par ECDSA P-256 + ROTACIÓN (keys[], rotateIdentity, save/load)
 │   ├── crypto.js       # primitivas vendorizadas de postal (canonical, sha256, sign/verify)
@@ -660,14 +742,22 @@ node src/cli.js verify demo    # verifica un dataDir arbitrario
 │   ├── config.js       # registro de colecciones + validación ajv (x-okf-type, x-hard-delete)
 │   ├── store.js        # orquestación CRUD (mutex sobre seq) + rotate/rebuild persistentes
 │   ├── server.js       # API REST (Fastify): registerRecord/Meta/AdminRoutes + hook apiKeyGuard
+│   ├── mcp.js          # servidor MCP (stdio): 9 tools memory_* (memoria para agentes)
 │   ├── gitlog.js       # commit git opt-in (GIT_COMMIT="true") best-effort por escritura
-│   └── cli.js          # `verify [dataDir]` por CLI (exit 0/1/2)
+│   └── cli.js          # `verify [dataDir]` por CLI (legacy; el unificado es bin/okf.js)
 ├── schema/collections/
-│   ├── notes.schema.json      # colección de ejemplo (x-okf-type "note")
-│   └── contacts.schema.json   # colección de ejemplo (x-okf-type "contact")
-├── data/                   # (generado) DATA_DIR: bundle/records + index.md + log.md + .postal/events/
-├── identities/             # (generado) agent.json
-└── test/                   # 35 tests node:test
+│   ├── notes.schema.json        # demo (x-okf-type "note")
+│   ├── contacts.schema.json     # demo (x-okf-type "contact")
+│   ├── patient.schema.json      # dominio médico (ejemplo, sin cumplimiento regulatorio)
+│   ├── prescription.schema.json # dominio médico (ejemplo)
+│   ├── legal_case.schema.json   # dominio legal (ejemplo)
+│   └── contract.schema.json     # dominio legal (ejemplo)
+├── Dockerfile          # node:20-alpine, CMD serve
+├── QUICKSTART.md       # guía rápida
+├── SECURITY.md        # modelo de amenazas y limitaciones
+├── data/               # (generado) DATA_DIR: bundle/records + index.md + log.md + .postal/events/
+├── identities/         # (generado) agent.json
+└── test/               # 39 tests node:test
 ```
 
 `data/`, `data-*/`, `identities/`, `node_modules/`, `vendor-postal/`, `*.log` y `.pm/`
