@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "okf-postal-db/collections/prescription",
+  "title": "Prescription",
+  "description": "Prescripción médica (colección de ejemplo para medicina). Plantilla, no afirma cumplimiento regulatorio.",
+  "x-okf-type": "prescription",
+  "x-hard-delete": false,
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["patient", "medication", "dose"],
+  "properties": {
+    "type": { "type": "string", "default": "prescription" },
+    "patient": { "type": "string", "minLength": 1, "description": "ID o nombre del paciente (OKF title)." },
+    "medication": { "type": "string", "minLength": 1, "description": "Nombre del medicamento." },
+    "dose": { "type": "string", "minLength": 1, "description": "Dosis prescrita." },
+    "frequency": { "type": "string", "description": "Frecuencia de administración." },
+    "start_date": { "type": "string", "format": "date", "description": "Inicio del tratamiento (ISO date)." },
+    "end_date": { "type": "string", "format": "date", "description": "Fin del tratamiento (ISO date)." },
+    "prescriber": { "type": "string", "description": "Profesional que prescribe." },
+    "tags": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "body": { "type": "string", "default": "", "description": "Indicaciones en Markdown." }
+  }
+}

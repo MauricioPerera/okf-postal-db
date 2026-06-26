@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "okf-postal-db/collections/patient",
+  "title": "Patient",
+  "description": "Paciente (colección de ejemplo para medicina). Plantilla, no afirma cumplimiento regulatorio.",
+  "x-okf-type": "patient",
+  "x-hard-delete": false,
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name"],
+  "properties": {
+    "type": { "type": "string", "default": "patient" },
+    "name": { "type": "string", "minLength": 1, "description": "Nombre del paciente (OKF title)." },
+    "birth_date": { "type": "string", "format": "date", "description": "Fecha de nacimiento (ISO date)." },
+    "sex": { "type": "string", "description": "Sexo biológico registrado." },
+    "national_id": { "type": "string", "description": "Identificador nacional del paciente." },
+    "blood_type": { "type": "string", "enum": ["A+","A-","B+","B-","AB+","AB-","O+","O-"], "description": "Grupo sanguíneo." },
+    "allergies": { "type": "array", "items": { "type": "string" }, "default": [], "description": "Alergias conocidas." },
+    "tags": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "body": { "type": "string", "default": "", "description": "Notas clínicas en Markdown." }
+  }
+}

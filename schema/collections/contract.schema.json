@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "okf-postal-db/collections/contract",
+  "title": "Contract",
+  "description": "Contrato (colección de ejemplo para abogacía). Plantilla, no afirma cumplimiento regulatorio.",
+  "x-okf-type": "contract",
+  "x-hard-delete": false,
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["title", "parties"],
+  "properties": {
+    "type": { "type": "string", "default": "contract" },
+    "title": { "type": "string", "minLength": 1, "description": "Título del contrato (OKF title)." },
+    "parties": { "type": "array", "items": { "type": "string" }, "minItems": 1, "description": "Partes del contrato." },
+    "effective_date": { "type": "string", "format": "date", "description": "Entrada en vigor (ISO date)." },
+    "expiry_date": { "type": "string", "format": "date", "description": "Vencimiento (ISO date)." },
+    "value": { "type": "number", "description": "Valor económico del contrato." },
+    "currency": { "type": "string", "description": "Moneda del valor (ISO 4217)." },
+    "status": { "type": "string", "enum": ["draft","signed","terminated","expired"], "description": "Estado del contrato." },
+    "tags": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "body": { "type": "string", "default": "", "description": "Cláusulas del contrato en Markdown." }
+  }
+}

@@ -3,5 +3,6 @@ data/
 data-*/
 identities/
 vendor-postal/
+test/tmp*/
 *.log
 .pm/

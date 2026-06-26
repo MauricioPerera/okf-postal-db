@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "okf-postal-db/collections/legal_case",
+  "title": "Legal Case",
+  "description": "Caso legal (colección de ejemplo para abogacía). Plantilla, no afirma cumplimiento regulatorio.",
+  "x-okf-type": "legal_case",
+  "x-hard-delete": false,
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["title", "client"],
+  "properties": {
+    "type": { "type": "string", "default": "legal_case" },
+    "title": { "type": "string", "minLength": 1, "description": "Título del caso (OKF title)." },
+    "client": { "type": "string", "minLength": 1, "description": "Cliente del caso." },
+    "counsel": { "type": "string", "description": "Abogado/a del caso." },
+    "court": { "type": "string", "description": "Tribunal competente." },
+    "case_number": { "type": "string", "description": "Número de expediente." },
+    "status": { "type": "string", "enum": ["open","closed","appeal","stayed"], "description": "Estado del caso." },
+    "opened_date": { "type": "string", "format": "date", "description": "Fecha de apertura (ISO date)." },
+    "tags": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "body": { "type": "string", "default": "", "description": "Resumen del caso en Markdown." }
+  }
+}

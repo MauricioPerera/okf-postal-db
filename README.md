@@ -237,6 +237,79 @@ devuelve `{ id, deleted: true }`). Los errores vienen como
 
 ---
 
+## Servidor MCP (memoria para agentes)
+
+Además de la API REST, la base se expone como **memoria** para un agente externo vía
+**MCP** (Model Context Protocol). El servidor MCP es el mismo proceso que conoce la
+DB OKF + bitácora; el **agente lo pone el usuario** y se conecta como cliente MCP.
+
+- **Archivo:** `src/mcp.js` · **Script:** `npm run mcp` (=`node src/mcp.js`)
+- **Transport:** stdio · **100 % local, sin red.**
+- **Dependencia:** `@modelcontextprotocol/sdk`
+- **`DATA_DIR`** (default `data`) selecciona el directorio de la DB, igual que en REST.
+
+### Arranque
+
+```bash
+npm run mcp                       # usa DATA_DIR=./data
+DATA_DIR=/ruta/a/los/datos npm run mcp
+```
+
+### Tools expuestas (9)
+
+Todas operan sobre la memoria OKF (mismas colecciones/schemas que la API REST):
+
+| Tool | Argumentos | Qué hace |
+|------|------------|----------|
+| `memory_collections` | _(ninguno)_ | Lista las colecciones y sus esquemas. |
+| `memory_list` | `{ collection, tag?, type?, q?, includeDeleted? }` | Lista registros (con filtros opcionales). |
+| `memory_read` | `{ collection, id }` | Lee un registro OKF. |
+| `memory_search` | `{ collection, q, limit? }` | Búsqueda de texto sobre `title` / `description` / `body`. |
+| `memory_index` | `{ collection? }` | Devuelve el `index.md` (navegación OKF). |
+| `memory_create` | `{ collection, payload }` | Crea un registro (valida contra el esquema). |
+| `memory_update` | `{ collection, id, payload, merge? }` | Actualiza un registro (`merge` por defecto). |
+| `memory_delete` | `{ collection, id }` | Soft-delete del registro. |
+| `memory_verify` | `{}` | Verifica la bitácora firmada (equivalente a `GET /verify`). |
+
+### Configuración en un cliente MCP (ej. Claude Desktop)
+
+Bloque para `claude_desktop_config.json`. **Las rutas deben ser absolutas** — ajústalas
+a tu máquina:
+
+```json
+{
+  "mcpServers": {
+    "okf-memory": {
+      "command": "node",
+      "args": ["/ruta/absoluta/al/repo/src/mcp.js"],
+      "env": { "DATA_DIR": "/ruta/a/los/datos" }
+    }
+  }
+}
+```
+
+### Modelo de recuperación
+
+**NAVEGACIÓN OKF**, no embeddings/vectores: el agente lee `memory_index` →
+`memory_list`/`memory_read` y razona sobre el contenido. Apto para el corpus de un
+profesional (volumen modesto).
+
+### Privacidad — léelo antes de asumir "sin red"
+
+> **La memoria es local; el eslabón de exposición es el MODELO.**
+>
+> El servidor MCP no abre sockets hacia fuera y los datos no salen por sí mismos. Pero
+> la promesa "sin exponer datos en la red" **solo se cumple si el agente usa un modelo
+> LOCAL** (Ollama, LM Studio, llama.cpp…). Si el agente usa un modelo en la **nube**
+> (p. ej. Claude, GPT, Gemini vía API), el contenido que le pases viaja a los
+> servidores del proveedor: la memoria queda local, pero los datos salen igual por el
+> modelo.
+>
+> Para el modelo de amenazas completo y las limitaciones, ver
+> [`SECURITY.md`](SECURITY.md).
+
+---
+
 ## Instalación y arranque
 
 Requisitos: Node.js >= 18.
@@ -555,9 +628,10 @@ npm test
 # -> node --test "test/**/*.test.js"
 ```
 
-**23 tests** (node:test) en `test/`: `db`, `okf-special` (index/log), `contacts`,
+**35 tests** (node:test) en `test/`: `db`, `okf-special` (index/log), `contacts`,
 `query` (paginación/búsqueda `?q=`), `auth` (API key), `rebuild`, `rotation`,
-`rotate-endpoint`, `gitlog`. `npm test` → **23/23 verde**.
+`rotate-endpoint`, `gitlog`, `mcp` (servidor MCP), `domain-schemas` (medicina/legal).
+`npm test` → **35/35 verde**.
 
 Los tests cubren el flujo completo (validación, construcción/firma de eventos, gate,
 proyección OKF, archivos especiales y los endpoints REST) usando la bitácora y el
@@ -593,7 +667,7 @@ node src/cli.js verify demo    # verifica un dataDir arbitrario
 │   └── contacts.schema.json   # colección de ejemplo (x-okf-type "contact")
 ├── data/                   # (generado) DATA_DIR: bundle/records + index.md + log.md + .postal/events/
 ├── identities/             # (generado) agent.json
-└── test/                   # 23 tests node:test
+└── test/                   # 35 tests node:test
 ```
 
 `data/`, `data-*/`, `identities/`, `node_modules/`, `vendor-postal/`, `*.log` y `.pm/`
