@@ -6,6 +6,7 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
+    "mcp": "node src/mcp.js",
     "init-identity": "node src/identity.js init",
     "verify": "node src/cli.js verify",
     "test": "node --test \"test/**/*.test.js\""
@@ -14,6 +15,7 @@
     "node": ">=18"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "fastify": "^4.28.1",
