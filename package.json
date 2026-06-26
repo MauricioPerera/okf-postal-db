@@ -4,6 +4,9 @@
   "description": "DB con CRUD para agentes: estado materializado en OKF (Markdown+YAML) y bitácora firmada append-only estilo postal, expuesta vía REST.",
   "type": "module",
   "main": "src/server.js",
+  "bin": {
+    "okf": "bin/okf.js"
+  },
   "scripts": {
     "start": "node src/server.js",
     "mcp": "node src/mcp.js",

@@ -1,0 +1,9 @@
+node_modules
+data
+data-*
+identities
+.pm
+vendor-postal
+*.log
+.git
+test/tmp*
