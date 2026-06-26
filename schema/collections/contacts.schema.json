@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "okf-postal-db/collections/contacts",
+  "title": "Contact",
+  "description": "Contacto (colección de ejemplo).",
+  "x-okf-type": "contact",
+  "x-hard-delete": false,
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name"],
+  "properties": {
+    "type": { "type": "string", "default": "contact" },
+    "name": { "type": "string", "minLength": 1, "description": "Nombre del contacto (OKF title)." },
+    "email": { "type": "string", "format": "email", "description": "Email del contacto." },
+    "phone": { "type": "string", "description": "Teléfono del contacto." },
+    "tags": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "resource": { "type": "string", "description": "URI canónica del recurso subyacente (OKF resource)." },
+    "body": { "type": "string", "default": "", "description": "Cuerpo Markdown del contacto." }
+  }
+}

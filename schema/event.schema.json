@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://postal.dev/schema/event.json",
+  "title": "Postal Event",
+  "type": "object",
+  "required": ["v", "kind", "chat_id", "from", "to", "created_at", "id", "body", "sig"],
+  "additionalProperties": false,
+  "properties": {
+    "v": { "const": 1 },
+    "kind": { "type": "string", "minLength": 1, "description": "any signed-record kind; reserved: message, member" },
+    "seq": { "type": "integer", "minimum": 0 },
+    "prev": { "type": ["string", "null"] },
+    "supersedes": { "type": ["string", "null"] },
+    "chat_id": { "type": "string", "minLength": 1 },
+    "from": { "type": "string", "pattern": "^[0-9A-F]{16}$" },
+    "to": { "type": "array", "items": { "type": "string" } },
+    "created_at": { "type": "string", "format": "date-time" },
+    "id": { "type": "string", "minLength": 1 },
+    "body": { "type": "object" },
+    "sig": { "type": "string" },
+    "attestations": {
+      "type": "array",
+      "description": "co-signatures on a member event; stripped from signedView before the author signs",
+      "items": {
+        "type": "object",
+        "properties": { "by": { "type": "string" }, "sig": { "type": "string" } }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "kind": { "const": "message" } } },
+      "then": {
+        "properties": {
+          "body": {
+            "type": "object",
+            "required": ["sealed"],
+            "properties": { "sealed": { "type": "string", "pattern": "^POSTAL1:" } }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "okf-postal-db/collections/notes",
+  "title": "Note",
+  "description": "Nota de conocimiento simple (colección de ejemplo).",
+  "x-okf-type": "note",
+  "x-hard-delete": false,
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["title"],
+  "properties": {
+    "type": { "type": "string", "default": "note" },
+    "title": { "type": "string", "minLength": 1, "description": "Título de la nota (OKF title)." },
+    "description": { "type": "string", "description": "Resumen de una frase (OKF description)." },
+    "tags": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "resource": { "type": "string", "description": "URI canónica del recurso subyacente (OKF resource)." },
+    "body": { "type": "string", "default": "", "description": "Cuerpo Markdown de la nota." }
+  }
+}
