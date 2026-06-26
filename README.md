@@ -580,12 +580,13 @@ Las colecciones se definen con **JSON Schema 2020-12** en
 compila un validador ajv por colección. **No hace falta tocar código** para añadir una
 colección: basta con crear el schema.
 
-### Colecciones incluidas (6)
+### Colecciones incluidas (9)
 
 Se definen en `schema/collections/*.schema.json` y se cargan dinámicamente al
-arrancar (no requiere tocar código). Dos de demostración y cuatro de **dominio**
-(plantillas de **ejemplo**: no afirman cumplimiento regulatorio HIPAA/GDPR ni
-ninguno otro — son puntos de partida a adaptar).
+arrancar (no requiere tocar código). Dos de demostración, cuatro de **dominio**
+medicina/legal y tres de **compra-venta** (plantillas de **ejemplo**: no afirman
+cumplimiento regulatorio HIPAA/GDPR ni ninguno otro — son puntos de partida a
+adaptar).
 
 | Colección | `x-okf-type` | Tipo | Campos | Requerido |
 |-----------|--------------|------|--------|-----------|
@@ -595,6 +596,16 @@ ninguno otro — son puntos de partida a adaptar).
 | `prescription` | `prescription` | dominio (médico) | receta (ejemplo, sin afirmar cumplimiento) | ver schema |
 | `legal_case` | `legal_case` | dominio (legal) | caso/expediente legal (ejemplo) | ver schema |
 | `contract` | `contract` | dominio (legal) | contrato (ejemplo) | ver schema |
+| `product` | `product` | dominio (compra-venta) | catálogo: `name`, `sku`, `price`, `currency`, `stock`, `description`, `tags`, `body` | `name` |
+| `order` | `order` | dominio (compra-venta) | pedido: `customer`, `items[]` (`sku`,`qty`,`unit_price`), `status`, `total`, `currency`, `placed_date`, `tags`, `body` | `customer`, `items` |
+| `payment` | `payment` | dominio (compra-venta) | pago: `order`, `amount`, `currency`, `method`, `status`, `paid_date`, `tags`, `body` | `order`, `amount` |
+
+> **`product` / `order` / `payment` son para MEMORIA + AUDIT-TRAIL del proceso de
+> compra-venta, NO un ledger transaccional.** Esta DB no da atomicidad
+> multi-registro, no controla concurrencia (un solo escritor) y no enforce
+> invariantes de negocio (stock ≥ 0, totales, doble cobro): registrar y auditar el
+> historial firmado, no actuar de caja registradora. La lógica de negocio (totales,
+> stock, pagos) va en el agente o en un sistema ACID aparte.
 
 Para agregar una colección nueva (p. ej. `tasks`):
 
@@ -708,10 +719,10 @@ npm test
 # -> node --test "test/**/*.test.js"
 ```
 
-**39 tests** (node:test) en `test/`: `db`, `okf-special` (index/log), `contacts`,
+**46 tests** (node:test) en `test/`: `db`, `okf-special` (index/log), `contacts`,
 `query` (paginación/búsqueda `?q=`), `auth` (API key), `rebuild`, `rotation`,
 `rotate-endpoint`, `gitlog`, `mcp` (servidor MCP), `domain-schemas` (medicina/legal),
-`bin` (CLI `okf`). `npm test` → **39/39 verde**.
+`commerce-schemas` (compra-venta), `bin` (CLI `okf`). `npm test` → **46/46 verde**.
 
 Los tests cubren el flujo completo (validación, construcción/firma de eventos, gate,
 proyección OKF, archivos especiales y los endpoints REST) usando la bitácora y el
@@ -751,7 +762,10 @@ node src/cli.js verify demo    # verifica un dataDir arbitrario
 │   ├── patient.schema.json      # dominio médico (ejemplo, sin cumplimiento regulatorio)
 │   ├── prescription.schema.json # dominio médico (ejemplo)
 │   ├── legal_case.schema.json   # dominio legal (ejemplo)
-│   └── contract.schema.json     # dominio legal (ejemplo)
+│   ├── contract.schema.json     # dominio legal (ejemplo)
+│   ├── product.schema.json      # dominio compra-venta (ejemplo, memoria/audit-trail)
+│   ├── order.schema.json        # dominio compra-venta (ejemplo, memoria/audit-trail)
+│   └── payment.schema.json      # dominio compra-venta (ejemplo, memoria/audit-trail)
 ├── Dockerfile          # node:20-alpine, CMD serve
 ├── QUICKSTART.md       # guía rápida
 ├── SECURITY.md        # modelo de amenazas y limitaciones

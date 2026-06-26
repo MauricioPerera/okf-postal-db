@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "okf-postal-db/collections/order",
+  "title": "Order",
+  "description": "Pedido de compra-venta (colección de ejemplo). Plantilla de ejemplo para memoria/audit-trail; NO garantiza integridad transaccional (sin atomicidad/concurrencia/invariantes).",
+  "x-okf-type": "order",
+  "x-hard-delete": false,
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["customer", "items"],
+  "properties": {
+    "type": { "type": "string", "default": "order" },
+    "customer": { "type": "string", "description": "Cliente del pedido." },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["sku", "qty"],
+        "properties": {
+          "sku": { "type": "string", "description": "SKU del producto pedido." },
+          "qty": { "type": "integer", "minimum": 1, "description": "Cantidad pedida." },
+          "unit_price": { "type": "number", "minimum": 0, "description": "Precio unitario snapshots (informativo)." }
+        }
+      },
+      "description": "Líneas del pedido."
+    },
+    "status": { "type": "string", "enum": ["cart","placed","paid","shipped","delivered","cancelled","refunded"], "description": "Estado del pedido." },
+    "total": { "type": "number", "minimum": 0, "description": "Total del pedido (informativo; calcularlo fuera de la DB)." },
+    "currency": { "type": "string", "description": "Moneda del total (ISO 4217)." },
+    "placed_date": { "type": "string", "format": "date", "description": "Fecha de pedido (ISO date)." },
+    "tags": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "body": { "type": "string", "default": "", "description": "Notas del pedido en Markdown." }
+  }
+}

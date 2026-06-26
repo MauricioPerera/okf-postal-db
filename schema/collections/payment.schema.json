@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "okf-postal-db/collections/payment",
+  "title": "Payment",
+  "description": "Pago de un pedido (colección de ejemplo para compra-venta). Plantilla de ejemplo para memoria/audit-trail; NO garantiza integridad transaccional (sin atomicidad/concurrencia/invariantes).",
+  "x-okf-type": "payment",
+  "x-hard-delete": false,
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["order", "amount"],
+  "properties": {
+    "type": { "type": "string", "default": "payment" },
+    "order": { "type": "string", "description": "ID/ref del pedido al que aplica el pago." },
+    "amount": { "type": "number", "minimum": 0, "description": "Monto del pago." },
+    "currency": { "type": "string", "description": "Moneda del monto (ISO 4217)." },
+    "method": { "type": "string", "description": "Medio de pago (card/cash/transfer/...)." },
+    "status": { "type": "string", "enum": ["pending","authorized","captured","failed","refunded"], "description": "Estado del pago." },
+    "paid_date": { "type": "string", "format": "date", "description": "Fecha de pago (ISO date)." },
+    "tags": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "body": { "type": "string", "default": "", "description": "Notas del pago en Markdown." }
+  }
+}

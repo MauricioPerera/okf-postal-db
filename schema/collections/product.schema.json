@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "okf-postal-db/collections/product",
+  "title": "Product",
+  "description": "Producto de catálogo (colección de ejemplo para compra-venta). Plantilla de ejemplo para memoria/audit-trail; NO garantiza integridad transaccional (sin atomicidad/concurrencia/invariantes).",
+  "x-okf-type": "product",
+  "x-hard-delete": false,
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name"],
+  "properties": {
+    "type": { "type": "string", "default": "product" },
+    "name": { "type": "string", "minLength": 1, "description": "Nombre del producto (OKF title)." },
+    "sku": { "type": "string", "description": "Identificador de stock (SKU)." },
+    "price": { "type": "number", "minimum": 0, "description": "Precio unitario." },
+    "currency": { "type": "string", "description": "Moneda del precio (ISO 4217)." },
+    "stock": { "type": "integer", "minimum": 0, "description": "Cantidad en stock (informativo; no se enforce)." },
+    "description": { "type": "string", "description": "Descripción del producto." },
+    "tags": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "body": { "type": "string", "default": "", "description": "Notas del producto en Markdown." }
+  }
+}
